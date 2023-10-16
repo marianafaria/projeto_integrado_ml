@@ -75,7 +75,7 @@ def train_model(model, X_train, y_train):
       model.fit(X_train, y_train)
 
 
-def predict_model(model, X_test):
+def predict_model(model, X_test, y_test):
    y_pred = model.predict(X_test)
    mse = mean_squared_error(y_test, y_pred)
    f1 = f1_score(y_test, y_pred)
@@ -85,14 +85,10 @@ def predict_model(model, X_test):
 
    return result_array
 
-#y_test
 
-#from sklearn.metrics import confusion_matrix
-#cm = confusion_matrix(y_test, y_pred)
-
-#sns.heatmap(cm,annot=True)
-
-#model.score(X_test, y_test)
+def predict_model_real(model, X_test_real):
+   y_pred_real = model.predict(X_test_real)
+   return y_pred_real
 
 
 if __name__ == '__main__':
