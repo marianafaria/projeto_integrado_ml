@@ -1,15 +1,12 @@
-import mlflow
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, f1_score, accuracy_score
+from sklearn.metrics import mean_squared_error, f1_score, accuracy_score, roc_auc_score, precision_score, recall_score
+from sklearn.ensemble import GradientBoostingClassifier
 
 import tuning_model
-import mlflow
 
 
-def process_data():
-   data = pd.read_csv('https://drive.google.com/uc?id=1QsgW3apKJ8-PazRbQKTzkZrW76CZ--qQ&export=download')
-   
+def process_data(data):   
    # retirando os valores null
    data = data[data['Gender'].notna()]
    data = data[data['Married'].notna()]
@@ -66,33 +63,41 @@ def process_data():
 
 
 def create_model(X_train, y_train):
-   model = tuning_model.get_best_model(X_train, y_train)
+   # Função para pegar o melhor modelo e hyperparametros (como a função demora em torno de 2hrs deixei já setado o melhor encontrado)
+   #model = tuning_model.get_best_model(X_train, y_train)
+   
+   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=4,
+                                    max_features='sqrt', min_samples_leaf=2, 
+                                    min_samples_split=5, n_estimators=250,
+                                    subsample=0.8)
+
    return model
 
 
-def train_model(model, X_train, y_train):
-   with mlflow.start_run(run_name='experiment_01') as run:
-      model.fit(X_train, y_train)
+def fit_model(model, X_train, y_train):
+   model.fit(X_train, y_train)
 
-
-def predict_model(model, X_test, y_test):
+def eval_model(model, X_test, y_test):
    y_pred = model.predict(X_test)
-   mse = mean_squared_error(y_test, y_pred)
-   f1 = f1_score(y_test, y_pred)
-   acc = accuracy_score(y_test, y_pred)
-
-   result_array = [mse, f1, acc]
-
-   return result_array
-
-
-def predict_model_real(model, X_test_real):
-   y_pred_real = model.predict(X_test_real)
-   return y_pred_real
+   return {
+      'roc_auc': roc_auc_score(y_test, y_pred),
+      'accuracy': accuracy_score(y_test, y_pred),
+      'precision': precision_score(y_test, y_pred),
+      'recall': recall_score(y_test, y_pred),
+      'f1': f1_score(y_test, y_pred),
+      'mse': mean_squared_error(y_test, y_pred)
+      }
 
 
 if __name__ == '__main__':
-   X_train, X_test, y_train, y_test = process_data()
+   # dados de treinamento
+   data = pd.read_csv('https://drive.google.com/uc?id=1QsgW3apKJ8-PazRbQKTzkZrW76CZ--qQ&export=download')
+
+   # dados de teste
+   #data = pd.read_csv('https://drive.google.com/uc?id=18dY8nfISSjm0ODCDywqwGZxpj_YHl_vx&export=download')
+
+   X_train, X_test, y_train, y_test = process_data(data)
    model = create_model(X_train, y_train)
-   mlflow.config_mlflow()
-   train_model(model, X_train, y_train)
+   fit_model(model, X_train, y_train)
+   result = eval_model(model, X_test, y_test)
+   print(result)

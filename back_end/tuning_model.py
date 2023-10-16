@@ -1,11 +1,10 @@
-import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import ShuffleSplit
 import xgboost as xgb
-from sklearn.ensemble import GradientBoostingClassifier
-
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 def get_best_model (X_train, y_train):
     algoritmos = {
@@ -15,6 +14,15 @@ def get_best_model (X_train, y_train):
                 'n_neighbors' : [9, 13, 15, 25],
                 'weights' : ['uniform', 'distance'],
                 'leaf_size': [30, 60, 90]
+            }
+        },
+        'AdaBoostClassifier' : {
+            'model' : AdaBoostClassifier(),
+            'params' : {
+                'estimator': [DecisionTreeClassifier(max_depth=1), DecisionTreeClassifier(max_depth=2)],
+                'n_estimators': [50, 150, 250],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'algorithm': ['SAMME', 'SAMME.R']
             }
         },
         'RandomForestClassifier' : {
@@ -29,7 +37,7 @@ def get_best_model (X_train, y_train):
         'GradientBoostingClassifier' : {
             'model' : GradientBoostingClassifier(),
             'params' : {
-                'n_estimators': [100, 150, 200],
+                'n_estimators': [50, 150, 250],
                 'learning_rate': [0.01, 0.1, 0.2],
                 'max_depth': [3, 4, 5],
                 'min_samples_split': [2, 5, 10],
@@ -60,12 +68,12 @@ def get_best_model (X_train, y_train):
     best_model = None
     best_score = 0
 
-    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=0)
+    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
 
     for algoritmos_name, config in algoritmos.items():
         gs = GridSearchCV(config['model'], config['params'], cv=cv)
         gs.fit(X_train, y_train)
-        
+
         if gs.best_score_ > best_score:
             best_model = gs.best_estimator_
             best_score = gs.best_score_
