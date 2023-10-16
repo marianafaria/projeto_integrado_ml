@@ -21,8 +21,9 @@ def process_data(data):
    data['Self_Employed'] = data['Self_Employed'].fillna('No')
    
    # Trocando os valores para 0 e 1
-   data.loc[data['Loan_Status'] == 'Y', 'Loan_Status'] = 1
-   data.loc[data['Loan_Status'] == 'N', 'Loan_Status'] = 0
+   if 'Loan_Status' in data.columns:
+      data.loc[data['Loan_Status'] == 'Y', 'Loan_Status'] = 1
+      data.loc[data['Loan_Status'] == 'N', 'Loan_Status'] = 0
    
    data.loc[data['Married'] == 'Yes', 'Married'] = 1
    data.loc[data['Married'] == 'No', 'Married'] = 0
@@ -49,16 +50,20 @@ def process_data(data):
    data['Education'] = data['Education'].astype(int)
    data['Self_Employed'] = data['Self_Employed'].astype(int)
    data['Property_Area'] = data['Property_Area'].astype(int)
-   data['Loan_Status'] = data['Loan_Status'].astype(int)
-   
+
+   if 'Loan_Status' in data.columns:
+      data['Loan_Status'] = data['Loan_Status'].astype(int)
+
    # Retirando a coluna de Loan_ID
    data.drop('Loan_ID', axis=1, inplace=True)
-   
+
+   return data
+
+
+def split_data(data):
    X = data.drop('Loan_Status', axis=1)
    y = data['Loan_Status']
-   
    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-   
    return X_train, X_test, y_train, y_test
 
 
@@ -77,7 +82,7 @@ def create_model(X_train, y_train):
 def fit_model(model, X_train, y_train):
    model.fit(X_train, y_train)
 
-def eval_model(model, X_test, y_test):
+def evaluate_model(model, X_test, y_test):
    y_pred = model.predict(X_test)
    return {
       'roc_auc': roc_auc_score(y_test, y_pred),
@@ -88,16 +93,25 @@ def eval_model(model, X_test, y_test):
       'mse': mean_squared_error(y_test, y_pred)
       }
 
+def pred_model_validation(model, data_val_df):
+   y_pred_real = model.predict(data_val_df)
+   data_val_df['Loan_Status_Predicted'] = y_pred_real
+   data_val_df.to_csv('dados_teste_com_previsoes.csv', index=False)
+
 
 if __name__ == '__main__':
    # dados de treinamento
    data = pd.read_csv('https://drive.google.com/uc?id=1QsgW3apKJ8-PazRbQKTzkZrW76CZ--qQ&export=download')
 
-   # dados de teste
-   #data = pd.read_csv('https://drive.google.com/uc?id=18dY8nfISSjm0ODCDywqwGZxpj_YHl_vx&export=download')
+   # dados de validação
+   data_val = pd.read_csv('https://drive.google.com/uc?id=18dY8nfISSjm0ODCDywqwGZxpj_YHl_vx&export=download')
 
-   X_train, X_test, y_train, y_test = process_data(data)
+   data_df = process_data(data)
+   X_train, X_test, y_train, y_test = split_data(data_df)
    model = create_model(X_train, y_train)
    fit_model(model, X_train, y_train)
-   result = eval_model(model, X_test, y_test)
-   print(result)
+   result = evaluate_model(model, X_test, y_test)
+   #print(result)
+
+   data_val_df = process_data(data_val)
+   pred_model_validation(model, data_val_df)
