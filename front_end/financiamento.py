@@ -1,6 +1,7 @@
 # Módulo de cálculo do financiamento
 
 # Imports
+import random
 import numpy_financial as npf
 import pandas as pd
 import streamlit as st
@@ -16,7 +17,7 @@ def get_financing_inputs(data, location=st):
 	data.Married = Married
 
 	data.Dependents = location.number_input('Possui dependentes?',
-		min_value = 1,
+		min_value = 0,
 		max_value = 3,
 		value = 1,
 		step = 1,
@@ -33,33 +34,33 @@ def get_financing_inputs(data, location=st):
 
 	data.ApplicantIncome = location.number_input('Renda do Candidato ($)',
 		min_value = 1,
-		max_value = 100_000_000,
-		value = 200_000,
+		max_value = 100_000_000_000,
+		value = 1,
 		step = 100,
 		key = 'ApplicantIncome')
 
 	data.CoapplicantIncome = location.number_input('Renda do co-requerente ($)',
 		min_value = 0,
-		max_value = 100_000_000,
-		value = 200_000,
+		max_value = 100_000_000_000,
+		value = 0,
 		step = 100,
 		key = 'CoapplicantIncome')
 
 	data.LoanAmount = location.number_input('Valor do Empréstimo ($)',
 		min_value = 1,
-		max_value = 100_000_000,
-		value = 200_000,
+		max_value = 100_000_000_000_000,
+		value = 1,
 		step = 100,
 		key = 'LoanAmount')
 
 	data.Loan_Amount_Term = location.number_input('Prazo do Empréstimo (em meses)',
 		min_value = 1,
-		max_value = 12000,
+		max_value = 120_000_000,
 		value = 360,
 		step = 1,
 		key = 'Loan_Amount_Term')
-    
-	data.Credit_History = 0
+
+	data.Credit_History = random.choice([0, 1])
 	data.simular_btn = None
 
 	botao_clicado = False

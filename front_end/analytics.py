@@ -9,7 +9,6 @@ import front_end.constantes as const
 def calc_display_basic_metrics(data, location=st):
 	
 	const.spacer('title')
-	print(data)
 
 
 # Mostra os resultados
