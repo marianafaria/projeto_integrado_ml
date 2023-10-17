@@ -1,9 +1,10 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, f1_score, accuracy_score, roc_auc_score, precision_score, recall_score
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 
-import tuning_model
+import back_end.tuning_model
 
 
 def process_data(data):   
@@ -25,21 +26,21 @@ def process_data(data):
       data.loc[data['Loan_Status'] == 'Y', 'Loan_Status'] = 1
       data.loc[data['Loan_Status'] == 'N', 'Loan_Status'] = 0
    
-   data.loc[data['Married'] == 'Yes', 'Married'] = 1
-   data.loc[data['Married'] == 'No', 'Married'] = 0
+   data.loc[(data['Married'] == 'Yes') | (data['Married'] == 'Sim'), 'Married'] = 1
+   data.loc[(data['Married'] == 'No') | (data['Married'] == 'Não'), 'Married'] = 0
    
-   data.loc[data['Self_Employed'] == 'Yes', 'Self_Employed'] = 1
-   data.loc[data['Self_Employed'] == 'No', 'Self_Employed'] = 0
+   data.loc[(data['Self_Employed'] == 'Yes') | (data['Self_Employed'] == 'Sim'), 'Self_Employed'] = 1
+   data.loc[(data['Self_Employed'] == 'No') | (data['Self_Employed'] == 'Não'), 'Self_Employed'] = 0
    
-   data.loc[data['Education'] == 'Graduate', 'Education'] = 1
-   data.loc[data['Education'] == 'Not Graduate', 'Education'] = 0
+   data.loc[(data['Education'] == 'Graduate') | (data['Education'] == 'Sim'), 'Education'] = 1
+   data.loc[(data['Education'] == 'Not Graduate') | (data['Education'] == 'Não'), 'Education'] = 0
 
-   data.loc[data['Gender'] == 'Male', 'Gender'] = 1
-   data.loc[data['Gender'] == 'Female', 'Gender'] = 0
+   data.loc[(data['Gender'] == 'Male') | (data['Gender'] == 'Masculino'), 'Gender'] = 1
+   data.loc[(data['Gender'] == 'Female') | (data['Gender'] == 'Feminino'), 'Gender'] = 0
 
    data.loc[data['Property_Area'] == 'Rural', 'Property_Area'] = 0
-   data.loc[data['Property_Area'] == 'Semiurban', 'Property_Area'] = 1
-   data.loc[data['Property_Area'] == 'Urban', 'Property_Area'] = 2
+   data.loc[(data['Property_Area'] == 'Semiurban') | (data['Property_Area'] == 'Semi-Urbano'), 'Property_Area'] = 1
+   data.loc[(data['Property_Area'] == 'Urban') | (data['Property_Area'] == 'Urbano'), 'Property_Area'] = 2
 
    data.loc[data['Dependents'] == '3+', 'Dependents'] = 3
    
@@ -54,8 +55,9 @@ def process_data(data):
    if 'Loan_Status' in data.columns:
       data['Loan_Status'] = data['Loan_Status'].astype(int)
 
-   # Retirando a coluna de Loan_ID
-   data.drop('Loan_ID', axis=1, inplace=True)
+   # Retirando a coluna de Loan_ID se ela existir
+   if 'Loan_Status' in data.columns:
+      data.drop('Loan_ID', axis=1, inplace=True)
 
    return data
 
@@ -68,13 +70,17 @@ def split_data(data):
 
 
 def create_model(X_train, y_train):
-   # Função para pegar o melhor modelo e hyperparametros (como a função demora em torno de 2hrs deixei já setado o melhor encontrado)
+   # Função para pegar o melhor modelo e hyperparametros (como a função demora +/- 2hrs deixei já setado o melhor encontrado)
    #model = tuning_model.get_best_model(X_train, y_train)
    
-   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=4,
-                                    max_features='sqrt', min_samples_leaf=2, 
-                                    min_samples_split=5, n_estimators=250,
-                                    subsample=0.8)
+#   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=4,
+#                                    max_features='sqrt', min_samples_leaf=2, 
+#                                    min_samples_split=5, n_estimators=250,
+#                                    subsample=0.8)
+
+   model = AdaBoostClassifier(algorithm='SAMME',
+                              estimator=DecisionTreeClassifier(max_depth=1),
+                              learning_rate=0.01)
 
    return model
 
@@ -98,20 +104,44 @@ def pred_model_validation(model, data_val_df):
    data_val_df['Loan_Status_Predicted'] = y_pred_real
    data_val_df.to_csv('dados_teste_com_previsoes.csv', index=False)
 
+   return data_val_df['Loan_Status_Predicted']
 
-if __name__ == '__main__':
-   # dados de treinamento
-   data = pd.read_csv('https://drive.google.com/uc?id=1QsgW3apKJ8-PazRbQKTzkZrW76CZ--qQ&export=download')
+
+def train_model(data):
+
+   data_df = {
+      'Gender': [data.Gender],
+      'Married': [data.Married],
+      'Dependents': [data.Dependents],
+      'Education': [data.Education],
+      'Self_Employed': [data.Self_Employed],
+      'ApplicantIncome': [data.ApplicantIncome],
+      'CoapplicantIncome': [data.CoapplicantIncome],
+      'LoanAmount': [data.LoanAmount],
+      'Loan_Amount_Term': [data.Loan_Amount_Term],
+      'Credit_History': [data.Credit_History],
+      'Property_Area': [data.Property_Area]      
+   }
+
+   data_df = pd.DataFrame(data_df)
+
+   # dados de treino
+   data_train = pd.read_csv('https://drive.google.com/uc?id=1QsgW3apKJ8-PazRbQKTzkZrW76CZ--qQ&export=download')
 
    # dados de validação
-   data_val = pd.read_csv('https://drive.google.com/uc?id=18dY8nfISSjm0ODCDywqwGZxpj_YHl_vx&export=download')
+   #data_val = pd.read_csv('https://drive.google.com/uc?id=18dY8nfISSjm0ODCDywqwGZxpj_YHl_vx&export=download')
 
-   data_df = process_data(data)
-   X_train, X_test, y_train, y_test = split_data(data_df)
+   data_train_df = process_data(data_train)
+   X_train, X_test, y_train, y_test = split_data(data_train_df)
    model = create_model(X_train, y_train)
    fit_model(model, X_train, y_train)
    result = evaluate_model(model, X_test, y_test)
    #print(result)
 
-   data_val_df = process_data(data_val)
-   pred_model_validation(model, data_val_df)
+   #data_val_df = process_data(data_val)
+   #pred_model_validation(model, data_val_df)
+
+   data_df_process = process_data(data_df)
+   loanStatusPredicted = pred_model_validation(model, data_df_process)
+
+   return loanStatusPredicted

@@ -1,0 +1,5 @@
+streamlit
+datetime2
+streamlit-option-menu
+scikit-learn==0.24.2
+xgboost
