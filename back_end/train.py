@@ -1,8 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, f1_score, accuracy_score, roc_auc_score, precision_score, recall_score
-from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 
 import back_end.tuning_model
 
@@ -56,7 +55,7 @@ def process_data(data):
       data['Loan_Status'] = data['Loan_Status'].astype(int)
 
    # Retirando a coluna de Loan_ID se ela existir
-   if 'Loan_Status' in data.columns:
+   if 'Loan_ID' in data.columns:
       data.drop('Loan_ID', axis=1, inplace=True)
 
    return data
@@ -71,16 +70,12 @@ def split_data(data):
 
 def create_model(X_train, y_train):
    # Função para pegar o melhor modelo e hyperparametros (como a função demora +/- 2hrs deixei já setado o melhor encontrado)
-   #model = tuning_model.get_best_model(X_train, y_train)
-   
-#   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=4,
-#                                    max_features='sqrt', min_samples_leaf=2, 
-#                                    min_samples_split=5, n_estimators=250,
-#                                    subsample=0.8)
+   #model = get_best_model.get_best_model(X_train, y_train)
 
-   model = AdaBoostClassifier(algorithm='SAMME',
-                              estimator=DecisionTreeClassifier(max_depth=1),
-                              learning_rate=0.01)
+   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=3, #4
+                                    max_features='sqrt', min_samples_leaf=2, 
+                                    min_samples_split=5, n_estimators=250,
+                                    subsample=0.8)
 
    return model
 
@@ -90,14 +85,20 @@ def fit_model(model, X_train, y_train):
 
 def evaluate_model(model, X_test, y_test):
    y_pred = model.predict(X_test)
-   return {
-      'roc_auc': roc_auc_score(y_test, y_pred),
-      'accuracy': accuracy_score(y_test, y_pred),
-      'precision': precision_score(y_test, y_pred),
-      'recall': recall_score(y_test, y_pred),
-      'f1': f1_score(y_test, y_pred),
-      'mse': mean_squared_error(y_test, y_pred)
-      }
+   result = {
+      'roc_auc': [roc_auc_score(y_test, y_pred)],
+      'accuracy': [accuracy_score(y_test, y_pred)],
+      'precision': [precision_score(y_test, y_pred)],
+      'recall': [recall_score(y_test, y_pred)],
+      'f1': [f1_score(y_test, y_pred)],
+      'mse': [mean_squared_error(y_test, y_pred)]
+   }
+
+   result_df = pd.DataFrame(data=result)
+   result_df.to_csv('dados_metricas.csv', index=False)
+
+   return result_df
+
 
 def pred_model_validation(model, data_val_df):
    y_pred_real = model.predict(data_val_df)

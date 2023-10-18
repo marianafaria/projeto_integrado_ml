@@ -1,42 +1,25 @@
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import ShuffleSplit
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier, RandomForestClassifier
+from sklearn.model_selection import GridSearchCV, ShuffleSplit
 import xgboost as xgb
-from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from lightgbm import LGBMClassifier
+from catboost import CatBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
-def get_best_model (X_train, y_train):
+def get_best_model(X_train, y_train):
     algoritmos = {
-        'KNeighborsClassifier' : {
-            'model' : KNeighborsClassifier(),
-            'params' : {
-                'n_neighbors' : [9, 13, 15, 25],
-                'weights' : ['uniform', 'distance'],
-                'leaf_size': [30, 60, 90]
-            }
-        },
-        'AdaBoostClassifier' : {
-            'model' : AdaBoostClassifier(),
-            'params' : {
-                'estimator': [DecisionTreeClassifier(max_depth=1), DecisionTreeClassifier(max_depth=2)],
+        'RandomForestClassifier': {
+            'model': RandomForestClassifier(),
+            'params': {
                 'n_estimators': [50, 150, 250],
-                'learning_rate': [0.01, 0.1, 0.2],
-                'algorithm': ['SAMME', 'SAMME.R']
-            }
-        },
-        'RandomForestClassifier' : {
-            'model' : RandomForestClassifier(),
-            'params' : {
-                'n_estimators' : [50, 150, 250],
-                'bootstrap' : [True, False],
+                'bootstrap': [True, False],
                 'max_depth': [None, 10, 20],
                 'min_samples_split': [2, 5, 10]
             }
         },
-        'GradientBoostingClassifier' : {
-            'model' : GradientBoostingClassifier(),
-            'params' : {
+        'GradientBoostingClassifier': {
+            'model': GradientBoostingClassifier(),
+            'params': {
                 'n_estimators': [50, 150, 250],
                 'learning_rate': [0.01, 0.1, 0.2],
                 'max_depth': [3, 4, 5],
@@ -47,9 +30,9 @@ def get_best_model (X_train, y_train):
                 'loss': ['exponential'],
             }
         },
-        'XGBClassifier' : {
-            'model' : xgb.XGBClassifier(),
-            'params' : {
+        'XGBClassifier': {
+            'model': xgb.XGBClassifier(),
+            'params': {
                 'n_estimators': [50, 150, 250],
                 'learning_rate': [0.01, 0.1, 0.2],
                 'max_depth': [3, 4, 5],
@@ -61,6 +44,22 @@ def get_best_model (X_train, y_train):
                 'reg_lambda': [0, 0.1, 0.2],
                 'objective': ['binary:logistic'],
                 'eval_metric': ['rmse'],
+            }
+        },
+        'LGBMClassifier': {
+            'model': LGBMClassifier(),
+            'params': {
+                'n_estimators': [50, 150, 250],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'max_depth': [3, 4, 5],
+            }
+        },
+        'CatBoostClassifier': {
+            'model': CatBoostClassifier(),
+            'params': {
+                'iterations': [50, 150, 250],
+                'learning_rate': [0.01, 0.1, 0.2],
+                'depth': [3, 4, 5],
             }
         }
     }
