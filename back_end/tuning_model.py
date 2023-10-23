@@ -1,20 +1,22 @@
-from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, ShuffleSplit
+import lightgbm as lgb
 import xgboost as xgb
-from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
 
 def get_best_model(X_train, y_train):
     algoritmos = {
         'RandomForestClassifier': {
             'model': RandomForestClassifier(),
             'params': {
-                'n_estimators': [50, 150, 250],
+                'n_estimators': [50, 100, 200, 250, 600],
+                'max_depth': [None, 3, 4, 5, 10, 20, 30],
+                'min_samples_split': [2, 4, 5, 10],
+                'min_samples_leaf': [1, 2, 4],
+                'criterion': ['gini', 'entropy'],
+                'max_features': ['sqrt', 'log2', None],
                 'bootstrap': [True, False],
-                'max_depth': [None, 10, 20],
-                'min_samples_split': [2, 5, 10]
+                'class_weight': [None, 'balanced'],
+                'oob_score': [True, False]
             }
         },
         'GradientBoostingClassifier': {
@@ -47,19 +49,11 @@ def get_best_model(X_train, y_train):
             }
         },
         'LGBMClassifier': {
-            'model': LGBMClassifier(),
+            'model': lgb.LGBMClassifier(),
             'params': {
                 'n_estimators': [50, 150, 250],
                 'learning_rate': [0.01, 0.1, 0.2],
                 'max_depth': [3, 4, 5],
-            }
-        },
-        'CatBoostClassifier': {
-            'model': CatBoostClassifier(),
-            'params': {
-                'iterations': [50, 150, 250],
-                'learning_rate': [0.01, 0.1, 0.2],
-                'depth': [3, 4, 5],
             }
         }
     }

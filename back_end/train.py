@@ -1,9 +1,7 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, f1_score, accuracy_score, roc_auc_score, precision_score, recall_score
-from sklearn.ensemble import GradientBoostingClassifier
-
-import back_end.tuning_model
+from sklearn.metrics import mean_squared_error, f1_score, accuracy_score, roc_auc_score, precision_score, recall_score, mean_absolute_error
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier
 
 
 def process_data(data):   
@@ -69,13 +67,23 @@ def split_data(data):
 
 
 def create_model(X_train, y_train):
-   # Função para pegar o melhor modelo e hyperparametros (como a função demora +/- 2hrs deixei já setado o melhor encontrado)
-   #model = get_best_model.get_best_model(X_train, y_train)
+   gb_model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=3,
+                                       max_features='sqrt', min_samples_leaf=2,
+                                       min_samples_split=5, n_estimators=250,
+                                       subsample=0.8)
 
-   model = GradientBoostingClassifier(learning_rate=0.01, loss='exponential', max_depth=3, #4
-                                    max_features='sqrt', min_samples_leaf=2, 
-                                    min_samples_split=5, n_estimators=250,
-                                    subsample=0.8)
+   rf_model = RandomForestClassifier(n_estimators=50, max_depth=3,
+                                    class_weight='balanced',
+                                    criterion='entropy',
+                                    max_features='sqrt',
+                                    min_samples_leaf=2, min_samples_split=2,
+                                    random_state=42)
+
+   # Crie o ensemble de modelos
+   model = VotingClassifier(estimators=[
+      ('gb', gb_model),
+      ('rf', rf_model)
+      ], voting='hard')  # Use 'hard' para classificação, 'soft' se os modelos retornarem probabilidades
 
    return model
 
@@ -90,8 +98,7 @@ def evaluate_model(model, X_test, y_test):
       'accuracy': [accuracy_score(y_test, y_pred)],
       'precision': [precision_score(y_test, y_pred)],
       'recall': [recall_score(y_test, y_pred)],
-      'f1': [f1_score(y_test, y_pred)],
-      'mse': [mean_squared_error(y_test, y_pred)]
+      'f1': [f1_score(y_test, y_pred)]
    }
 
    result_df = pd.DataFrame(data=result)
