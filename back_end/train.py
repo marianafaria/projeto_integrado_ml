@@ -56,6 +56,10 @@ def process_data(data):
    if 'Loan_ID' in data.columns:
       data.drop('Loan_ID', axis=1, inplace=True)
 
+   # Retirando a coluna de Credit_History se ela existir
+   if 'Credit_History' in data.columns:
+      data.drop('Credit_History', axis=1, inplace=True)
+
    return data
 
 

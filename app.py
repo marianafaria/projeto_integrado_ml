@@ -35,7 +35,7 @@ def page_footer():
 	const.spacer('title', st.sidebar)
 	const.spacer('title', st.sidebar)
 	const.spacer('title', st.sidebar)
-	st.sidebar.text(datetime.today().strftime('%B %d, %Y'))	
+	st.sidebar.text(datetime.today().strftime('%d de %B de %Y'))	
 	st.sidebar.text('v1.0.0')
 	st.sidebar.text('Projeto Integrado ML')
 
